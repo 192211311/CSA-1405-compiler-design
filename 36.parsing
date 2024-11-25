@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+int precedence(char op) {
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
+    if (op == '^') return 3;
+    return 0;
+}
+
+int applyOperation(int a, int b, char op) {
+    switch (op) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return a / b;
+    case '^': return (int)pow(a, b);
+    }
+    return 0;
+}
+
+int evaluate(char *expression) {
+    int values[100], valTop = -1;
+    char ops[100], opTop = -1;
+
+    for (int i = 0; expression[i] != '\0'; i++) {
+        if (isdigit(expression[i])) {
+            int val = 0;
+            while (isdigit(expression[i])) {
+                val = val * 10 + (expression[i] - '0');
+                i++;
+            }
+            i--;
+            values[++valTop] = val;
+        } else if (expression[i] == '(') {
+            ops[++opTop] = expression[i];
+        } else if (expression[i] == ')') {
+            while (opTop != -1 && ops[opTop] != '(') {
+                int b = values[valTop--];
+                int a = values[valTop--];
+                values[++valTop] = applyOperation(a, b, ops[opTop--]);
+            }
+            opTop--; // Remove '('
+        } else {
+            while (opTop != -1 && precedence(ops[opTop]) >= precedence(expression[i])) {
+                int b = values[valTop--];
+                int a = values[valTop--];
+                values[++valTop] = applyOperation(a, b, ops[opTop--]);
+            }
+            ops[++opTop] = expression[i];
+        }
+    }
+
+    while (opTop != -1) {
+        int b = values[valTop--];
+        int a = values[valTop--];
+        values[++valTop] = applyOperation(a, b, ops[opTop--]);
+    }
+
+    return values[valTop];
+}
+
+int main() {
+    char expression[100];
+    printf("Enter the expression: ");
+    scanf("%s", expression);
+
+    printf("Result: %d\n", evaluate(expression));
+
+    return 0;
+}
